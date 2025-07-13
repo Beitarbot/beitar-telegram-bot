@@ -6,6 +6,22 @@ import feedparser
 from telegram import Bot
 from deep_translator import GoogleTranslator
 from tweepy import Client
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+# ===== טריק לפתיחת פורט כדי ש-Render לא יסגור =====
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Beitar Bot is running!")
+
+def run_http_server():
+    port = int(os.environ.get("PORT", 10000))  # Render מגדיר את PORT כמשתנה סביבה
+    server = HTTPServer(("0.0.0.0", port), DummyHandler)
+    server.serve_forever()
+
+threading.Thread(target=run_http_server, daemon=True).start()
 
 # === הגדרות בסיס ===
 TOKEN = os.getenv("TG_TOKEN")
