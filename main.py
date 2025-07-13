@@ -9,6 +9,27 @@ from tweepy import Client
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+# === פתרון Render: Web Server קטן על פורט ===
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Beitar bot is alive!")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))  # Render יגדיר PORT
+    server = HTTPServer(("0.0.0.0", port), DummyHandler)
+    server.serve_forever()
+
+threading.Thread(target=run_web_server, daemon=True).start()
+
+# === כאן מתחיל הבוט שלך כרגיל ===
+async def main():
+    # התחלת הלולאה הראשית של הבוט
+    await run_bot_loop()  # זה הפונקציה שמריצה את הבוט שלך
+
+asyncio.run(main())
+
 # ===== טריק לפתיחת פורט כדי ש-Render לא יסגור =====
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
