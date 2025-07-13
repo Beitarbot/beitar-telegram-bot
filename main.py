@@ -65,8 +65,9 @@ KEYWORDS = ["בית\"ר", "ביתר", "אברמוב", "יצחקי"]
 
 async def check_rss(name, url):
     feed = feedparser.parse(url)
-    print(f"[{name}] מספר כתבות בפיד: {len(feed.entries)}")
+    print(f"[{name}] נמצאו {len(feed.entries)} פריטים בפיד")  # כאן ההדפסה
     for e in feed.entries:
+        print(f"[{name}] כותרת: {e.title}")  # הדפס כותרות לצורך בדיקה
         id_ = e.link
         if id_ in sent:
             continue
