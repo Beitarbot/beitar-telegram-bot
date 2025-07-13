@@ -118,5 +118,6 @@ async def main_loop():
 async def main():
     await main_loop()
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# תמיד להריץ, גם אם לא מריצים עם `python main.py`
+asyncio.run(main())
+
