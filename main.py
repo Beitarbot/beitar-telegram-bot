@@ -23,13 +23,6 @@ def run_web_server():
 
 threading.Thread(target=run_web_server, daemon=True).start()
 
-# === כאן מתחיל הבוט שלך כרגיל ===
-async def main():
-    await main_loop()
-
-asyncio.run(main())
-
-
 # === הגדרות בסיס ===
 TOKEN = os.getenv("TG_TOKEN")
 CHAT_ID = os.getenv("TG_CHAT_ID")
@@ -117,7 +110,11 @@ async def main_loop():
             await check_twitter()
         except Exception as e:
             print("Main loop error:", e)
-        await asyncio.sleep(300)  # 5 דקות
+        await asyncio.sleep(300)  # כל 5 דקות
+
+# === התחלה ===
+async def main():
+    await main_loop()
 
 if __name__ == "__main__":
-    asyncio.run(main_loop())
+    asyncio.run(main())
