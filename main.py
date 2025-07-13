@@ -64,6 +64,7 @@ async def send_message(text, img_url=None):
 KEYWORDS = ["בית\"ר", "ביתר", "אברמוב", "יצחקי"]
 
 async def check_rss(name, url):
+    print(f"🔍 Checking RSS from {name}")
     feed = feedparser.parse(url)
     print(f"[{name}] נמצאו {len(feed.entries)} פריטים בפיד")  # כאן ההדפסה
     for e in feed.entries:
@@ -84,6 +85,7 @@ TWITTER_USERS = {
 }
 
 async def check_twitter():
+    print("🐦 Checking Twitter Feeds")
     for username, user_id in TWITTER_USERS.items():
         try:
             response = twitter.get_users_tweets(
@@ -103,6 +105,7 @@ async def check_twitter():
 
 # === לולאת ריצה אוטומטית ===
 async def main_loop():
+    print("🏁 Beitar Bot Started Main Loop")  # שורת בדיקה
     while True:
         try:
             await check_rss("ONE", "https://www.one.co.il/cat/coop/xml/rss/newsfeed.aspx?t=1")
