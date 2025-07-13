@@ -110,7 +110,7 @@ async def main_loop():
             await check_twitter()
         except Exception as e:
             print("Main loop error:", e)
-        await asyncio.sleep(300)  # כל 5 דקות
+        await asyncio.sleep(60)  # כל 1 דקות
 
 # === התחלה ===
 async def main():
