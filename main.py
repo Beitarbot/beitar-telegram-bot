@@ -65,11 +65,12 @@ KEYWORDS = ["בית\"ר", "ביתר", "אברמוב", "יצחקי"]
 
 async def check_rss(name, url):
     feed = feedparser.parse(url)
+    print(f"[{name}] מספר כתבות בפיד: {len(feed.entries)}")
     for e in feed.entries:
         id_ = e.link
         if id_ in sent:
             continue
-        if any(re.search(k, e.title, re.IGNORECASE) for k in KEYWORDS):
+        if any(re.search(k, e.title + e.get("summary", ""), re.IGNORECASE) for k in KEYWORDS):
             title = translate(e.title)
             await send_message(f"{name} 📄\n{title}\n{e.link}")
             mark_sent(id_)
