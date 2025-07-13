@@ -103,7 +103,7 @@ async def check_instagram():
 # === MAIN LOOP אוטומטי כל 5 דק' ===
 async def main_loop():
     while True:
-        await check_rss("ONE", "https://www.one.co.il/Feed/RssFeedZone?zone=1")
+        await check_rss("ONE", "https://www.one.co.il/cat/coop/xml/rss/newsfeed.aspx?t=1")
         await check_rss("Sport5", "https://www.sport5.co.il/rss.aspx?FolderID=2529")
         await check_rss("Sport1", "https://www.sport1.co.il/feed")
         await check_twitter()
