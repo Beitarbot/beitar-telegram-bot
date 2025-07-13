@@ -68,19 +68,30 @@ async def check_rss(name, url):
             await send_message(f"{name} 📄\n{title}\n{e.link}")
             mark_sent(id_)
 
-# === טוויטר של אופיר סער ===
+# === טוויטר API v2 ===
+from tweepy import Client
+
+TW_BEARER = os.getenv("TW_BEARER_TOKEN")
+twitter_v2 = Client(bearer_token=TW_BEARER)
+
 async def check_twitter():
-    tweets = twitter_api.user_timeline(screen_name="saar_ofir", tweet_mode="extended", count=5)
-    for t in tweets:
-        id_ = str(t.id)
-        if id_ in sent: continue
-        text = t.full_text
-        if any(k in text for k in KEYWORDS):
-            media_url = None
-            if 'media' in t.entities:
-                media_url = t.entities['media'][0]['media_url_https']
-            await send_message(f"Twitter @{t.user.screen_name}\n{text}", media_url)
-            mark_sent(id_)
+    try:
+        response = twitter_v2.get_users_tweets(
+            id="36787262",  # זה ה-ID של @saar_ofir
+            max_results=5,
+            tweet_fields=["created_at", "text"]
+        )
+        tweets = response.data or []
+        for tweet in tweets:
+            id_ = str(tweet.id)
+            text = tweet.text
+            if id_ in sent: continue
+            if any(k in text for k in KEYWORDS):
+                await send_message(f"Twitter @saar_ofir\n{text}")
+                mark_sent(id_)
+    except Exception as e:
+        print("Twitter error:", e)
+
 
 # === אינסטגרם של בית"ר ===
 async def check_instagram():
