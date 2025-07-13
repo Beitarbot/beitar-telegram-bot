@@ -25,24 +25,10 @@ threading.Thread(target=run_web_server, daemon=True).start()
 
 # === כאן מתחיל הבוט שלך כרגיל ===
 async def main():
-    # התחלת הלולאה הראשית של הבוט
-    await run_bot_loop()  # זה הפונקציה שמריצה את הבוט שלך
+    await main_loop()
 
 asyncio.run(main())
 
-# ===== טריק לפתיחת פורט כדי ש-Render לא יסגור =====
-class DummyHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Beitar Bot is running!")
-
-def run_http_server():
-    port = int(os.environ.get("PORT", 10000))  # Render מגדיר את PORT כמשתנה סביבה
-    server = HTTPServer(("0.0.0.0", port), DummyHandler)
-    server.serve_forever()
-
-threading.Thread(target=run_http_server, daemon=True).start()
 
 # === הגדרות בסיס ===
 TOKEN = os.getenv("TG_TOKEN")
