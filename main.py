@@ -12,7 +12,6 @@ from datetime import datetime, timezone, timedelta
 import requests
 from bs4 import BeautifulSoup
 
-# === פתרון Render: Web Server קטן על פורט ===
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -26,19 +25,16 @@ def run_web_server():
 
 threading.Thread(target=run_web_server, daemon=True).start()
 
-# === הגדרות בסיס ===
 TOKEN = os.getenv("TG_TOKEN")
 CHAT_ID = os.getenv("TG_CHAT_ID")
 TW_BEARER = os.getenv("TW_BEARER_TOKEN")
 bot = Bot(token=TOKEN)
 twitter = Client(bearer_token=TW_BEARER)
 
-# === מילות מפתח לסינון ===
 KEYWORDS = ["בית\"ר", "ביתר", "אברמוב", "יצחקי", "מביתר", "מבית\"ר", "בביתר", "בבית\"ר",
             "גיל כהן", "מיגל סילבה", "ירדן שועה", "עומר אצילי", "סילבה קאני", "טימוטי מוזי", "מוזי",
             "קאני", "שועה", "אצילי", "קאלו", "אילסון", "איילסון", "טבארש", "קראבאלי", "אריאל מנדי"]
 
-# === טעינת מזהים שנשלחו בעבר ===
 SENT_FILE = "sent.json"
 if os.path.exists(SENT_FILE):
     with open(SENT_FILE, "r", encoding="utf-8") as f:
@@ -57,7 +53,6 @@ else:
     sent = set()
     twitter_index = 0
 
-# === עדכון קובץ מזהים ===
 def update_sent_file():
     sent_data = {"sent_ids": list(sent), "twitter_index": twitter_index}
     with open(SENT_FILE, "w", encoding="utf-8") as f:
@@ -67,14 +62,12 @@ def mark_sent(id_):
     sent.add(id_)
     update_sent_file()
 
-# === תרגום ===
 def translate(text):
     try:
         return GoogleTranslator(source='auto', target='he').translate(text)
     except:
         return text
 
-# === שליחת הודעה לטלגרם ===
 async def send_message(text, img_url=None):
     try:
         if img_url:
@@ -82,13 +75,12 @@ async def send_message(text, img_url=None):
         else:
             await bot.send_message(chat_id=CHAT_ID, text=text)
     except Exception as e:
-        print("Telegram error:", e)
+        print("Telegram error:", e, flush=True)
 
-# === בדיקת RSS ===
 async def check_rss(name, url):
-    print(f"🔍 נכנס ל־check_rss עבור {name}")
+    print(f"🔍 נכנס ל־check_rss עבור {name}", flush=True)
     feed = feedparser.parse(url)
-    print(f"[{name}] נמצאו {len(feed.entries)} פריטים בפיד")
+    print(f"[{name}] נמצאו {len(feed.entries)} פריטים בפיד", flush=True)
     for e in feed.entries:
         id_ = e.link
         if id_ in sent:
@@ -99,15 +91,14 @@ async def check_rss(name, url):
             await send_message(f"{name} 📄\n{title}\n{e.link}")
             mark_sent(id_)
 
-# === ספורט5 — גירוד עמוד במקום RSS ===
 async def check_sport5():
-    print("🔍 נכנס ל־check_sport5")
+    print("🔍 נכנס ל־check_sport5", flush=True)
     try:
         url = "https://www.sport5.co.il/liga.aspx?FolderID=44/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         items = soup.select(".articleText")
-        print(f"[Sport5] נמצאו {len(items)} פריטים")
+        print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
         for tag in items:
             a = tag.find("a")
             if not a:
@@ -120,17 +111,16 @@ async def check_sport5():
                 await send_message(f"Sport5 📄\n{title}\n{link}")
                 mark_sent(link)
     except Exception as e:
-        print("Sport5 error:", e)
+        print("Sport5 error:", e, flush=True)
 
-# === ספורט1 — גירוד עמוד במקום RSS ===
 async def check_sport1():
-    print("🔍 נכנס ל־check_sport1")
+    print("🔍 נכנס ל־check_sport1", flush=True)
     try:
         url = "https://sport1.maariv.co.il/israeli-soccer/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         items = soup.select(".main-article-title a, .articles-list-item-title a")
-        print(f"[Sport1] נמצאו {len(items)} פריטים")
+        print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
         for a in items:
             title = a.get_text(strip=True)
             link = a.get("href")
@@ -142,9 +132,8 @@ async def check_sport1():
                 await send_message(f"Sport1 📄\n{title}\n{link}")
                 mark_sent(link)
     except Exception as e:
-        print("Sport1 error:", e)
+        print("Sport1 error:", e, flush=True)
 
-# === טוויטר — משתמש אחד בכל סיבוב ===
 TWITTER_USERS = {
     "saar_ofir": "36787262",
     "fcbeitar": "137186222",
@@ -161,7 +150,7 @@ async def check_twitter():
     now = datetime.now(timezone.utc)
 
     if now - last_checked[username] < timedelta(minutes=15):
-        print(f"⏳ מדלג על @{username}, נבדק לאחרונה לפני פחות מ־15 דקות")
+        print(f"⏳ מדלג על @{username}, נבדק לאחרונה לפני פחות מ־15 דקות", flush=True)
         twitter_index = (twitter_index + 1) % len(twitter_user_keys)
         update_sent_file()
         return
@@ -170,7 +159,7 @@ async def check_twitter():
     twitter_index = (twitter_index + 1) % len(twitter_user_keys)
     update_sent_file()
 
-    print(f"🐦 נכנס ל־check_twitter עבור @{username}")
+    print(f"🐦 נכנס ל־check_twitter עבור @{username}", flush=True)
 
     try:
         response = twitter.get_users_tweets(
@@ -207,24 +196,23 @@ async def check_twitter():
 
             await send_message(f"Twitter @{username}\n{text}", img_url)
             mark_sent(id_)
-            print(f"✅ נשלח ציוץ: {text[:40]}...")
+            print(f"✅ נשלח ציוץ: {text[:40]}...", flush=True)
 
     except Exception as e:
-        print(f"Twitter error ({username}):", e)
+        print(f"Twitter error ({username}):", e, flush=True)
 
-# === לולאת הריצה ===
 async def main_loop():
-    print("🏁 Beitar Bot Started Main Loop ✅")
+    print("🏁 Beitar Bot Started Main Loop ✅", flush=True)
     while True:
         try:
-            print("🔄 Beginning new loop iteration")
+            print("🔄 Beginning new loop iteration", flush=True)
             await check_rss("ONE", "https://www.one.co.il/cat/coop/xml/rss/newsfeed.aspx?t=1")
             await check_sport5()
             await check_sport1()
             await check_rss("וואלה ספורט", "https://rss.walla.co.il/feed/156")
             await check_twitter()
         except Exception as e:
-            print("❌ Main loop error:", e)
+            print("❌ Main loop error:", e, flush=True)
         await asyncio.sleep(60)
 
 async def main():
