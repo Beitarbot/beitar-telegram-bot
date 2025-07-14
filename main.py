@@ -106,7 +106,7 @@ async def check_rss(name, url):
 async def check_sport5():
     print("\U0001F50D נכנס ל־check_sport5", flush=True)
     try:
-        url = "https://www.sport5.co.il/Section.aspx?FolderID=402"
+        url = "https://www.sport5.co.il/Section.aspx?FolderID=44"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         items = soup.select(".mainArticle a, .subArticles a")
