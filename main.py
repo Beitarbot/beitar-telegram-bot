@@ -8,6 +8,7 @@ from deep_translator import GoogleTranslator
 from tweepy import Client
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from datetime import datetime, timezone
 
 # === פתרון Render: Web Server קטן על פורט ===
 class DummyHandler(BaseHTTPRequestHandler):
@@ -31,17 +32,28 @@ bot = Bot(token=TOKEN)
 twitter = Client(bearer_token=TW_BEARER)
 
 # === מזהים שנשלחו למניעת כפילויות ===
+def update_sent_file():
+    sent_data["sent_ids"] = list(sent)
+    sent_data["twitter_index"] = twitter_index
+    with open(SENT_FILE, "w", encoding="utf-8") as f:
+        json.dump(sent_data, f, ensure_ascii=False)
+        
 SENT_FILE = "sent.json"
 if os.path.exists(SENT_FILE):
     with open(SENT_FILE, "r", encoding="utf-8") as f:
         sent = set(json.load(f))
 else:
-    sent = set()
+    sent_data = {"sent_ids": [], "twitter_index": 0}
+    if os.path.exists(SENT_FILE):
+    with open(SENT_FILE, "r", encoding="utf-8") as f:
+        sent_data = json.load(f)
+        sent = set(sent_data.get("sent_ids", []))
+        twitter_index = sent_data.get("twitter_index", 0)
+
 
 def mark_sent(id_):
     sent.add(id_)
-    with open(SENT_FILE, "w", encoding="utf-8") as f:
-        json.dump(list(sent), f, ensure_ascii=False)
+    update_sent_file()
 
 # === תרגום לעברית (למקורות מחו"ל) ===
 def translate(text):
@@ -87,20 +99,19 @@ TWITTER_USERS = {
     "fcbeitar": "137186222",
     "NZenziper": "143806331"
 }
-twitter_user_keys = list(TWITTER_USERS.keys())
-twitter_index = 0  # נתחיל מהראשון
 
-ALWAYS_ALLOW_USERS = ["fcbeitar"]  # שמות משתמשים שמפרסמים תמיד, בלי מילות מפתח
+twitter_user_keys = list(TWITTER_USERS.keys())
+twitter_index = 0  # זה נשמר גלובלית
 
 async def check_twitter():
     global twitter_index
-    print("🐦 Checking Twitter Feed (Single User Per Run)")
-    
     username = twitter_user_keys[twitter_index]
     user_id = TWITTER_USERS[username]
-    
-    # עדכון למשתמש הבא בריצה הבאה
     twitter_index = (twitter_index + 1) % len(twitter_user_keys)
+    update_sent_file()
+
+
+    print(f"🐦 Checking Twitter user @{username}")
 
     try:
         response = twitter.get_users_tweets(
@@ -110,17 +121,18 @@ async def check_twitter():
             expansions=["attachments.media_keys"],
             media_fields=["url", "preview_image_url"]
         )
-
         tweets = response.data or []
-        media_dict = {}
+        media = {}
+            if response.includes and "media" in response.includes:
+            media = {m.media_key: m for m in response.includes["media"]}
 
-        # נבנה מיפוי media_key לתמונה
-        if response.includes and "media" in response.includes:
-            for media in response.includes["media"]:
-                if media.type == "photo" and hasattr(media, "url"):
-                    media_dict[media.media_key] = media.url
+
+        today = datetime.now(timezone.utc).date()
 
         for tweet in tweets:
+            if tweet.created_at.date() != today:
+                continue
+
             id_ = str(tweet.id)
             if id_ in sent:
                 continue
@@ -128,16 +140,16 @@ async def check_twitter():
             text = tweet.text
             img_url = None
 
-            # בדוק אם יש תמונה בציוץ
-            if hasattr(tweet, "attachments"):
-                keys = tweet.attachments.get("media_keys", [])
-                for key in keys:
-                    if key in media_dict:
-                        img_url = media_dict[key]
-                        break  # ניקח את התמונה הראשונה
+            if hasattr(tweet, "attachments") and "media_keys" in tweet.attachments:
+                for key in tweet.attachments["media_keys"]:
+                    m = media.get(key)
+                    if m and hasattr(m, "url"):
+                        img_url = m.url
+                        break
 
-            await send_message(f"Twitter @{username}\n{text}", img_url=img_url)
+            await send_message(f"Twitter @{username}\n{text}", img_url)
             mark_sent(id_)
+            print(f"✅ נשלח ציוץ: {text[:40]}...")
 
     except Exception as e:
         print(f"Twitter error ({username}):", e)
