@@ -57,6 +57,7 @@ else:
     sent = set()
     twitter_index = 0
 
+# === עדכון קובץ מזהים ===
 def update_sent_file():
     sent_data = {"sent_ids": list(sent), "twitter_index": twitter_index}
     with open(SENT_FILE, "w", encoding="utf-8") as f:
@@ -98,12 +99,14 @@ async def check_rss(name, url):
             await send_message(f"{name} 📄\n{title}\n{e.link}")
             print(f"📤 {name} — נשלחת כותרת: {title}", flush=True)
             mark_sent(id_)
+        else:
+            print(f"[{name}] 🔍 נבדקת כותרת: \"{e.title}\" ❌ אין מילות מפתח", flush=True)
 
-# === ספורט5 — גירוד עמוד ===
+# === ספורט5 ===
 async def check_sport5():
     print("🔍 נכנס ל־check_sport5", flush=True)
     try:
-        url = "https://www.sport5.co.il/liga.aspx?FolderID=44"
+        url = "https://www.sport5.co.il/liga.aspx?FolderID=44/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         items = soup.select(".articleText")
@@ -120,14 +123,16 @@ async def check_sport5():
                 await send_message(f"Sport5 📄\n{title}\n{link}")
                 print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
                 mark_sent(link)
+            else:
+                print(f"[Sport5] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
     except Exception as e:
         print("Sport5 error:", e)
 
-# === ספורט1 — גירוד עמוד ===
+# === ספורט1 ===
 async def check_sport1():
     print("🔍 נכנס ל־check_sport1", flush=True)
     try:
-        url = "https://sport1.maariv.co.il/soccer/teams/40675/"
+        url = "https://sport1.maariv.co.il/israeli-soccer/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         items = soup.select(".main-article-title a, .articles-list-item-title a")
@@ -143,6 +148,8 @@ async def check_sport1():
                 await send_message(f"Sport1 📄\n{title}\n{link}")
                 print(f"📤 Sport1 — נשלחת כותרת: {title}", flush=True)
                 mark_sent(link)
+            else:
+                print(f"[Sport1] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
     except Exception as e:
         print("Sport1 error:", e)
 
@@ -207,14 +214,17 @@ async def check_twitter():
                         img_url = m.url
                         break
 
-            await send_message(f"Twitter @{username}\n{text}", img_url)
-            print(f"✅ נשלח ציוץ: {text[:40]}...", flush=True)
-            mark_sent(id_)
+            if any(re.search(k, text, re.IGNORECASE) for k in KEYWORDS):
+                await send_message(f"Twitter @{username}\n{text}", img_url)
+                print(f"✅ נשלח ציוץ: {text[:40]}...", flush=True)
+                mark_sent(id_)
+            else:
+                print(f"[Twitter @{username}] 🔍 נבדק ציוץ: \"{text[:40]}...\" ❌ אין מילות מפתח", flush=True)
 
     except Exception as e:
         print(f"Twitter error ({username}):", e)
 
-# === לולאה ראשית ===
+# === לולאת הריצה ===
 async def main_loop():
     print("🏁 Beitar Bot Started Main Loop ✅", flush=True)
     while True:
