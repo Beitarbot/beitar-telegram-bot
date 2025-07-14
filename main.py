@@ -35,14 +35,19 @@ twitter = Client(bearer_token=TW_BEARER)
 SENT_FILE = "sent.json"
 if os.path.exists(SENT_FILE):
     with open(SENT_FILE, "r", encoding="utf-8") as f:
-        sent_data = json.load(f)
+        raw_data = json.load(f)
+        if isinstance(raw_data, list):
+            # פורמט ישן – רק מזהים
+            sent_data = {"sent_ids": raw_data, "twitter_index": 0}
+        else:
+            # פורמט חדש
+            sent_data = raw_data
 else:
     sent_data = {"sent_ids": [], "twitter_index": 0}
 
 sent = set(sent_data.get("sent_ids", []))
 twitter_index = sent_data.get("twitter_index", 0)
 
-# === עדכון קובץ השליחה והאינדקס ===
 def update_sent_file():
     sent_data["sent_ids"] = list(sent)
     sent_data["twitter_index"] = twitter_index
@@ -90,7 +95,7 @@ async def check_rss(name, url):
         else:
             print(f"[{name}] ⛔ לא נשלח – לא נמצא מילות מפתח")
 
-# === ציוצים ממספר משתמשים (לפי תור, עם מדיה) ===
+# === ציוצים ממספר משתמשים (ללא סינון) ===
 TWITTER_USERS = {
     "saar_ofir": "36787262",
     "fcbeitar": "137186222",
