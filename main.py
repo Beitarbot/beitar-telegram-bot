@@ -226,6 +226,22 @@ async def check_twitter():
     except Exception as e:
         print(f"Twitter error ({username}):", e, flush=True)
 
+
+# === פינג עצמי לשמירה על פעילות ===
+async def ping_self():
+    url = "https://beitar-telegram-bot.onrender.com"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                print(f"🌐 Pinged self: {resp.status}", flush=True)
+    except Exception as e:
+        print(f"Ping error: {e}", flush=True)
+
+async def keep_alive_loop():
+    while True:
+        await ping_self()
+        await asyncio.sleep(840)  # כל 14 דקות
+
 # === לולאת הריצה ===
 async def main_loop():
     print("🏁 Beitar Bot Started Main Loop ✅", flush=True)
@@ -241,7 +257,12 @@ async def main_loop():
             print("❌ Main loop error:", e, flush=True)
         await asyncio.sleep(60)
 
+
+# === הפעלת שתי הלולאות בו־זמנית ===
 async def main():
-    await main_loop()
+    await asyncio.gather(
+        main_loop(),
+        keep_alive_loop()
+    )
 
 asyncio.run(main())
