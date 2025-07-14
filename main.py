@@ -61,21 +61,25 @@ async def send_message(text, img_url=None):
         print("Telegram error:", e)
 
 # === בדיקת RSS כללי (עם סינון) ===
-KEYWORDS = ["בית\"ר", "ביתר", "אברמוב", "יצחקי"]
+KEYWORDS = ["בית\"ר", "ביתר", "אברמוב", "יצחקי", "מביתר", "מבית\"ר", "בביתר", "בבית\"ר"]
 
 async def check_rss(name, url):
     print(f"🔍 Checking RSS from {name}")
     feed = feedparser.parse(url)
-    print(f"[{name}] נמצאו {len(feed.entries)} פריטים בפיד")  # כאן ההדפסה
+    print(f"[{name}] נמצאו {len(feed.entries)} פריטים בפיד")
     for e in feed.entries:
-        print(f"[{name}] כותרת: {e.title}")  # הדפס כותרות לצורך בדיקה
+        print(f"[{name}] כותרת: {e.title}")
         id_ = e.link
         if id_ in sent:
             continue
-        if any(re.search(k, e.title + e.get("summary", ""), re.IGNORECASE) for k in KEYWORDS):
+        combined_text = e.title + e.get("summary", "")
+        if any(re.search(k, combined_text, re.IGNORECASE) for k in KEYWORDS):
             title = translate(e.title)
             await send_message(f"{name} 📄\n{title}\n{e.link}")
             mark_sent(id_)
+        else:
+            print(f"[{name}] ⛔️ לא נשלח – לא נמצא מילות מפתח")
+
 
 # === ציוצים ממספר משתמשים (ללא סינון) ===
 TWITTER_USERS = {
