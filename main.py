@@ -12,6 +12,7 @@ from datetime import datetime, timezone, timedelta
 import requests
 from bs4 import BeautifulSoup
 
+# === פתרון Render: Web Server קטן על פורט ===
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -25,16 +26,19 @@ def run_web_server():
 
 threading.Thread(target=run_web_server, daemon=True).start()
 
+# === הגדרות בסיס ===
 TOKEN = os.getenv("TG_TOKEN")
 CHAT_ID = os.getenv("TG_CHAT_ID")
 TW_BEARER = os.getenv("TW_BEARER_TOKEN")
 bot = Bot(token=TOKEN)
 twitter = Client(bearer_token=TW_BEARER)
 
+# === מילות מפתח לסינון ===
 KEYWORDS = ["בית\"ר", "ביתר", "אברמוב", "יצחקי", "מביתר", "מבית\"ר", "בביתר", "בבית\"ר",
             "גיל כהן", "מיגל סילבה", "ירדן שועה", "עומר אצילי", "סילבה קאני", "טימוטי מוזי", "מוזי",
             "קאני", "שועה", "אצילי", "קאלו", "אילסון", "איילסון", "טבארש", "קראבאלי", "אריאל מנדי"]
 
+# === טעינת מזהים שנשלחו בעבר ===
 SENT_FILE = "sent.json"
 if os.path.exists(SENT_FILE):
     with open(SENT_FILE, "r", encoding="utf-8") as f:
@@ -62,12 +66,14 @@ def mark_sent(id_):
     sent.add(id_)
     update_sent_file()
 
+# === תרגום ===
 def translate(text):
     try:
         return GoogleTranslator(source='auto', target='he').translate(text)
     except:
         return text
 
+# === שליחת הודעה לטלגרם ===
 async def send_message(text, img_url=None):
     try:
         if img_url:
@@ -75,8 +81,9 @@ async def send_message(text, img_url=None):
         else:
             await bot.send_message(chat_id=CHAT_ID, text=text)
     except Exception as e:
-        print("Telegram error:", e, flush=True)
+        print("Telegram error:", e)
 
+# === בדיקת RSS ===
 async def check_rss(name, url):
     print(f"🔍 נכנס ל־check_rss עבור {name}", flush=True)
     feed = feedparser.parse(url)
@@ -89,12 +96,14 @@ async def check_rss(name, url):
         if any(re.search(k, combined_text, re.IGNORECASE) for k in KEYWORDS):
             title = translate(e.title)
             await send_message(f"{name} 📄\n{title}\n{e.link}")
+            print(f"📤 {name} — נשלחת כותרת: {title}", flush=True)
             mark_sent(id_)
 
+# === ספורט5 — גירוד עמוד ===
 async def check_sport5():
     print("🔍 נכנס ל־check_sport5", flush=True)
     try:
-        url = "https://www.sport5.co.il/liga.aspx?FolderID=44/"
+        url = "https://www.sport5.co.il/liga.aspx?FolderID=44"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         items = soup.select(".articleText")
@@ -109,14 +118,16 @@ async def check_sport5():
                 continue
             if any(k in title for k in KEYWORDS):
                 await send_message(f"Sport5 📄\n{title}\n{link}")
+                print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
                 mark_sent(link)
     except Exception as e:
-        print("Sport5 error:", e, flush=True)
+        print("Sport5 error:", e)
 
+# === ספורט1 — גירוד עמוד ===
 async def check_sport1():
     print("🔍 נכנס ל־check_sport1", flush=True)
     try:
-        url = "https://sport1.maariv.co.il/israeli-soccer/"
+        url = "https://sport1.maariv.co.il/soccer/teams/40675/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         items = soup.select(".main-article-title a, .articles-list-item-title a")
@@ -130,10 +141,12 @@ async def check_sport1():
                 continue
             if any(k in title for k in KEYWORDS):
                 await send_message(f"Sport1 📄\n{title}\n{link}")
+                print(f"📤 Sport1 — נשלחת כותרת: {title}", flush=True)
                 mark_sent(link)
     except Exception as e:
-        print("Sport1 error:", e, flush=True)
+        print("Sport1 error:", e)
 
+# === טוויטר ===
 TWITTER_USERS = {
     "saar_ofir": "36787262",
     "fcbeitar": "137186222",
@@ -195,12 +208,13 @@ async def check_twitter():
                         break
 
             await send_message(f"Twitter @{username}\n{text}", img_url)
-            mark_sent(id_)
             print(f"✅ נשלח ציוץ: {text[:40]}...", flush=True)
+            mark_sent(id_)
 
     except Exception as e:
-        print(f"Twitter error ({username}):", e, flush=True)
+        print(f"Twitter error ({username}):", e)
 
+# === לולאה ראשית ===
 async def main_loop():
     print("🏁 Beitar Bot Started Main Loop ✅", flush=True)
     while True:
@@ -212,7 +226,7 @@ async def main_loop():
             await check_rss("וואלה ספורט", "https://rss.walla.co.il/feed/156")
             await check_twitter()
         except Exception as e:
-            print("❌ Main loop error:", e, flush=True)
+            print("❌ Main loop error:", e)
         await asyncio.sleep(60)
 
 async def main():
