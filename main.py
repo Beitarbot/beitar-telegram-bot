@@ -150,16 +150,29 @@ TWITTER_USERS = {
     "fcbeitar": "137186222",
     "NZenziper": "143806331"
 }
+
 twitter_user_keys = list(TWITTER_USERS.keys())
+last_checked = {user: datetime.min.replace(tzinfo=timezone.utc) for user in TWITTER_USERS}
 
 async def check_twitter():
     global twitter_index
     username = twitter_user_keys[twitter_index]
     user_id = TWITTER_USERS[username]
+    now = datetime.now(timezone.utc)
+
+    # הגבלת זמן – פעם ב־15 דקות בלבד
+    if now - last_checked[username] < timedelta(minutes=15):
+        print(f"⏳ מדלג על @{username}, נבדק לאחרונה לפני פחות מ־15 דקות")
+        twitter_index = (twitter_index + 1) % len(twitter_user_keys)
+        update_sent_file()
+        return
+
+    last_checked[username] = now
     twitter_index = (twitter_index + 1) % len(twitter_user_keys)
     update_sent_file()
 
     print(f"🐦 Checking Twitter user @{username}")
+
     try:
         response = twitter.get_users_tweets(
             id=user_id,
@@ -169,26 +182,34 @@ async def check_twitter():
             media_fields=["url", "preview_image_url"]
         )
         tweets = response.data or []
-        media = {m.media_key: m for m in response.includes.get("media", [])} if response.includes else {}
+        media = {}
+        if response.includes and "media" in response.includes:
+            media = {m.media_key: m for m in response.includes["media"]}
 
         today = datetime.now(timezone.utc).date()
+
         for tweet in tweets:
             if tweet.created_at.date() != today:
                 continue
+
             id_ = str(tweet.id)
             if id_ in sent:
                 continue
+
             text = tweet.text
             img_url = None
-            if tweet.attachments and "media_keys" in tweet.attachments:
+
+            if hasattr(tweet, "attachments") and "media_keys" in tweet.attachments:
                 for key in tweet.attachments["media_keys"]:
                     m = media.get(key)
                     if m and hasattr(m, "url"):
                         img_url = m.url
                         break
+
             await send_message(f"Twitter @{username}\n{text}", img_url)
             mark_sent(id_)
             print(f"✅ נשלח ציוץ: {text[:40]}...")
+
     except Exception as e:
         print(f"Twitter error ({username}):", e)
 
@@ -204,7 +225,7 @@ async def main_loop():
             await check_twitter()
         except Exception as e:
             print("Main loop error:", e)
-        await asyncio.sleep(180)
+        await asyncio.sleep(60)
 
 async def main():
     await main_loop()
