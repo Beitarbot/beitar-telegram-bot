@@ -4,3 +4,5 @@ deep-translator
 instaloader
 tweepy
 aiohttp
+beautifulsoup4
+requests
