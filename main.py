@@ -88,6 +88,8 @@ TWITTER_USERS = {
     "NZenziper": "143806331"
 }
 
+ALWAYS_ALLOW_USERS = ["fcbeitar"]  # שמות משתמשים שמפרסמים תמיד, בלי מילות מפתח
+
 async def check_twitter():
     print("🐦 Checking Twitter Feeds")
     for username, user_id in TWITTER_USERS.items():
@@ -102,7 +104,11 @@ async def check_twitter():
                 id_ = str(tweet.id)
                 if id_ in sent:
                     continue
-                if any(re.search(k, tweet.text, re.IGNORECASE) for k in KEYWORDS):
+
+                if (
+                    username in ALWAYS_ALLOW_USERS
+                    or any(re.search(k, tweet.text, re.IGNORECASE) for k in KEYWORDS)
+                ):
                     await send_message(f"Twitter @{username}\n{tweet.text}")
                     mark_sent(id_)
                 else:
