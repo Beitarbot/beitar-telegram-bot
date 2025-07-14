@@ -82,11 +82,11 @@ async def send_message(text, img_url=None):
         else:
             await bot.send_message(chat_id=CHAT_ID, text=text)
     except Exception as e:
-        print("Telegram error:", e)
+        print("Telegram error:", e, flush=True)
 
 # === בדיקת RSS ===
 async def check_rss(name, url):
-    print(f"🔍 נכנס ל־check_rss עבור {name}", flush=True)
+    print(f"\U0001F50D נכנס ל־check_rss עבור {name}", flush=True)
     feed = feedparser.parse(url)
     print(f"[{name}] נמצאו {len(feed.entries)} פריטים בפיד", flush=True)
     for e in feed.entries:
@@ -100,23 +100,23 @@ async def check_rss(name, url):
             print(f"📤 {name} — נשלחת כותרת: {title}", flush=True)
             mark_sent(id_)
         else:
-            print(f"[{name}] 🔍 נבדקת כותרת: \"{e.title}\" ❌ אין מילות מפתח", flush=True)
+            print(f"[{name}] \U0001F50D נבדקת כותרת: \"{e.title}\" ❌ אין מילות מפתח", flush=True)
 
 # === ספורט5 ===
 async def check_sport5():
-    print("🔍 נכנס ל־check_sport5", flush=True)
+    print("\U0001F50D נכנס ל־check_sport5", flush=True)
     try:
-        url = "https://www.sport5.co.il/liga.aspx?FolderID=44"
+        url = "https://www.sport5.co.il/Section.aspx?FolderID=402"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select(".articleText")
+        items = soup.select(".mainArticle a, .subArticles a")
         print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
-        for tag in items:
-            a = tag.find("a")
-            if not a:
-                continue
+        for a in items:
             title = a.get_text(strip=True)
-            link = "https://www.sport5.co.il" + a.get("href")
+            link = a.get("href")
+            if not link or not link.startswith("/"):
+                continue
+            link = "https://www.sport5.co.il" + link
             if link in sent:
                 continue
             if any(k in title for k in KEYWORDS):
@@ -124,24 +124,26 @@ async def check_sport5():
                 print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
                 mark_sent(link)
             else:
-                print(f"[Sport5] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
+                print(f"[Sport5] \U0001F50D נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
     except Exception as e:
-        print("Sport5 error:", e)
+        print("Sport5 error:", e, flush=True)
 
 # === ספורט1 ===
 async def check_sport1():
-    print("🔍 נכנס ל־check_sport1", flush=True)
+    print("\U0001F50D נכנס ל־check_sport1", flush=True)
     try:
-        url = "https://sport1.maariv.co.il/"
+        url = "https://sport1.maariv.co.il/israeli-soccer/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select(".main-article-title a, .articles-list-item-title a")
+        items = soup.select("h3 a, .main-article-title a, .articles-list-item-title a")
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
         for a in items:
             title = a.get_text(strip=True)
             link = a.get("href")
+            if not link:
+                continue
             if not link.startswith("http"):
-                link = "https://www.sport1.co.il" + link
+                link = "https://sport1.maariv.co.il" + link
             if link in sent:
                 continue
             if any(k in title for k in KEYWORDS):
@@ -149,9 +151,9 @@ async def check_sport1():
                 print(f"📤 Sport1 — נשלחת כותרת: {title}", flush=True)
                 mark_sent(link)
             else:
-                print(f"[Sport1] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
+                print(f"[Sport1] \U0001F50D נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
     except Exception as e:
-        print("Sport1 error:", e)
+        print("Sport1 error:", e, flush=True)
 
 # === טוויטר ===
 TWITTER_USERS = {
@@ -169,8 +171,8 @@ async def check_twitter():
     user_id = TWITTER_USERS[username]
     now = datetime.now(timezone.utc)
 
-    if now - last_checked[username] < timedelta(minutes=15):
-        print(f"⏳ מדלג על @{username}, נבדק לאחרונה לפני פחות מ־15 דקות", flush=True)
+    if now - last_checked[username] < timedelta(minutes=40):
+        print(f"⏳ מדלג על @{username}, נבדק לאחרונה לפני פחות מ־40 דקות", flush=True)
         twitter_index = (twitter_index + 1) % len(twitter_user_keys)
         update_sent_file()
         return
@@ -219,10 +221,10 @@ async def check_twitter():
                 print(f"✅ נשלח ציוץ: {text[:40]}...", flush=True)
                 mark_sent(id_)
             else:
-                print(f"[Twitter @{username}] 🔍 נבדק ציוץ: \"{text[:40]}...\" ❌ אין מילות מפתח", flush=True)
+                print(f"[Twitter @{username}] \U0001F50D נבדק ציוץ: \"{text[:40]}...\" ❌ אין מילות מפתח", flush=True)
 
     except Exception as e:
-        print(f"Twitter error ({username}):", e)
+        print(f"Twitter error ({username}):", e, flush=True)
 
 # === לולאת הריצה ===
 async def main_loop():
@@ -236,7 +238,7 @@ async def main_loop():
             await check_rss("וואלה ספורט", "https://rss.walla.co.il/feed/156")
             await check_twitter()
         except Exception as e:
-            print("❌ Main loop error:", e)
+            print("❌ Main loop error:", e, flush=True)
         await asyncio.sleep(60)
 
 async def main():
