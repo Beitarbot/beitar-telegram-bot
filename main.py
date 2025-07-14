@@ -87,34 +87,61 @@ TWITTER_USERS = {
     "fcbeitar": "137186222",
     "NZenziper": "143806331"
 }
+twitter_user_keys = list(TWITTER_USERS.keys())
+twitter_index = 0  # נתחיל מהראשון
 
 ALWAYS_ALLOW_USERS = ["fcbeitar"]  # שמות משתמשים שמפרסמים תמיד, בלי מילות מפתח
 
 async def check_twitter():
-    print("🐦 Checking Twitter Feeds")
-    for username, user_id in TWITTER_USERS.items():
-        try:
-            response = twitter.get_users_tweets(
-                id=user_id,
-                max_results=5,
-                tweet_fields=["created_at", "text"]
-            )
-            tweets = response.data or []
-            for tweet in tweets:
-                id_ = str(tweet.id)
-                if id_ in sent:
-                    continue
+    global twitter_index
+    print("🐦 Checking Twitter Feed (Single User Per Run)")
+    
+    username = twitter_user_keys[twitter_index]
+    user_id = TWITTER_USERS[username]
+    
+    # עדכון למשתמש הבא בריצה הבאה
+    twitter_index = (twitter_index + 1) % len(twitter_user_keys)
 
-                if (
-                    username in ALWAYS_ALLOW_USERS
-                    or any(re.search(k, tweet.text, re.IGNORECASE) for k in KEYWORDS)
-                ):
-                    await send_message(f"Twitter @{username}\n{tweet.text}")
-                    mark_sent(id_)
-                else:
-                    print(f"[Twitter @{username}] ⛔️ לא נשלח – לא נמצא מילות מפתח: {tweet.text}")
-        except Exception as e:
-            print(f"Twitter error ({username}):", e)
+    try:
+        response = twitter.get_users_tweets(
+            id=user_id,
+            max_results=5,
+            tweet_fields=["created_at", "text", "attachments"],
+            expansions=["attachments.media_keys"],
+            media_fields=["url", "preview_image_url"]
+        )
+
+        tweets = response.data or []
+        media_dict = {}
+
+        # נבנה מיפוי media_key לתמונה
+        if response.includes and "media" in response.includes:
+            for media in response.includes["media"]:
+                if media.type == "photo" and hasattr(media, "url"):
+                    media_dict[media.media_key] = media.url
+
+        for tweet in tweets:
+            id_ = str(tweet.id)
+            if id_ in sent:
+                continue
+
+            text = tweet.text
+            img_url = None
+
+            # בדוק אם יש תמונה בציוץ
+            if hasattr(tweet, "attachments"):
+                keys = tweet.attachments.get("media_keys", [])
+                for key in keys:
+                    if key in media_dict:
+                        img_url = media_dict[key]
+                        break  # ניקח את התמונה הראשונה
+
+            await send_message(f"Twitter @{username}\n{text}", img_url=img_url)
+            mark_sent(id_)
+
+    except Exception as e:
+        print(f"Twitter error ({username}):", e)
+
 
 
 # === לולאת ריצה אוטומטית ===
