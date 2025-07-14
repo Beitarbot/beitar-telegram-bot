@@ -103,7 +103,7 @@ async def check_rss(name, url):
 async def check_sport5():
     print("🔍 Checking Sport5")
     try:
-        url = "https://www.sport5.co.il/sections.aspx?FolderID=2529"
+        url = "https://www.sport5.co.il/liga.aspx?FolderID=44"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         items = soup.select(".articleText")
