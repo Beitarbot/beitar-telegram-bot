@@ -102,10 +102,14 @@ async def check_twitter():
                 id_ = str(tweet.id)
                 if id_ in sent:
                     continue
-                await send_message(f"Twitter @{username}\n{tweet.text}")
-                mark_sent(id_)
+                if any(re.search(k, tweet.text, re.IGNORECASE) for k in KEYWORDS):
+                    await send_message(f"Twitter @{username}\n{tweet.text}")
+                    mark_sent(id_)
+                else:
+                    print(f"[Twitter @{username}] ⛔️ לא נשלח – לא נמצא מילות מפתח: {tweet.text}")
         except Exception as e:
             print(f"Twitter error ({username}):", e)
+
 
 # === לולאת ריצה אוטומטית ===
 async def main_loop():
