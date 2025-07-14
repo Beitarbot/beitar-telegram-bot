@@ -106,10 +106,10 @@ async def check_rss(name, url):
 async def check_sport5():
     print("\U0001F50D נכנס ל־check_sport5", flush=True)
     try:
-        url = "https://www.sport5.co.il/Section.aspx?FolderID=44"
+        url = "https://www.sport5.co.il/liga.aspx?FolderID=44"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select(".mainArticle a, .subArticles a")
+        items = soup.select(".mainArticle a, .subArticles a, .articleShort a")
         print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
         for a in items:
             title = a.get_text(strip=True)
@@ -135,7 +135,7 @@ async def check_sport1():
         url = "https://sport1.maariv.co.il/israeli-soccer/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select("h3 a, .main-article-title a, .articles-list-item-title a")
+        items = soup.find_all("a", href=True)
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
         for a in items:
             title = a.get_text(strip=True)
