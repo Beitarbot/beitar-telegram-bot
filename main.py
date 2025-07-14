@@ -31,25 +31,23 @@ TW_BEARER = os.getenv("TW_BEARER_TOKEN")
 bot = Bot(token=TOKEN)
 twitter = Client(bearer_token=TW_BEARER)
 
-# === מזהים שנשלחו למניעת כפילויות ===
+# === טעינת מזהים שנשלחו והאינדקס של טוויטר מהקובץ ===
+SENT_FILE = "sent.json"
+if os.path.exists(SENT_FILE):
+    with open(SENT_FILE, "r", encoding="utf-8") as f:
+        sent_data = json.load(f)
+else:
+    sent_data = {"sent_ids": [], "twitter_index": 0}
+
+sent = set(sent_data.get("sent_ids", []))
+twitter_index = sent_data.get("twitter_index", 0)
+
+# === עדכון קובץ השליחה והאינדקס ===
 def update_sent_file():
     sent_data["sent_ids"] = list(sent)
     sent_data["twitter_index"] = twitter_index
     with open(SENT_FILE, "w", encoding="utf-8") as f:
         json.dump(sent_data, f, ensure_ascii=False)
-        
-SENT_FILE = "sent.json"
-if os.path.exists(SENT_FILE):
-    with open(SENT_FILE, "r", encoding="utf-8") as f:
-        sent = set(json.load(f))
-else:
-    sent_data = {"sent_ids": [], "twitter_index": 0}
-    if os.path.exists(SENT_FILE):
-    with open(SENT_FILE, "r", encoding="utf-8") as f:
-        sent_data = json.load(f)
-        sent = set(sent_data.get("sent_ids", []))
-        twitter_index = sent_data.get("twitter_index", 0)
-
 
 def mark_sent(id_):
     sent.add(id_)
@@ -90,10 +88,9 @@ async def check_rss(name, url):
             await send_message(f"{name} 📄\n{title}\n{e.link}")
             mark_sent(id_)
         else:
-            print(f"[{name}] ⛔️ לא נשלח – לא נמצא מילות מפתח")
+            print(f"[{name}] ⛔ לא נשלח – לא נמצא מילות מפתח")
 
-
-# === ציוצים ממספר משתמשים (ללא סינון) ===
+# === ציוצים ממספר משתמשים (לפי תור, עם מדיה) ===
 TWITTER_USERS = {
     "saar_ofir": "36787262",
     "fcbeitar": "137186222",
@@ -101,7 +98,6 @@ TWITTER_USERS = {
 }
 
 twitter_user_keys = list(TWITTER_USERS.keys())
-twitter_index = 0  # זה נשמר גלובלית
 
 async def check_twitter():
     global twitter_index
@@ -109,7 +105,6 @@ async def check_twitter():
     user_id = TWITTER_USERS[username]
     twitter_index = (twitter_index + 1) % len(twitter_user_keys)
     update_sent_file()
-
 
     print(f"🐦 Checking Twitter user @{username}")
 
@@ -123,9 +118,8 @@ async def check_twitter():
         )
         tweets = response.data or []
         media = {}
-            if response.includes and "media" in response.includes:
+        if response.includes and "media" in response.includes:
             media = {m.media_key: m for m in response.includes["media"]}
-
 
         today = datetime.now(timezone.utc).date()
 
@@ -154,11 +148,9 @@ async def check_twitter():
     except Exception as e:
         print(f"Twitter error ({username}):", e)
 
-
-
 # === לולאת ריצה אוטומטית ===
 async def main_loop():
-    print("🏁 Beitar Bot Started Main Loop")  # שורת בדיקה
+    print("🏁 Beitar Bot Started Main Loop")
     while True:
         try:
             await check_rss("ONE", "https://www.one.co.il/cat/coop/xml/rss/newsfeed.aspx?t=1")
@@ -168,12 +160,10 @@ async def main_loop():
             await check_twitter()
         except Exception as e:
             print("Main loop error:", e)
-        await asyncio.sleep(60)  # כל 1 דקות
+        await asyncio.sleep(60)
 
 # === התחלה ===
 async def main():
     await main_loop()
 
-# תמיד להריץ, גם אם לא מריצים עם `python main.py`
 asyncio.run(main())
-
