@@ -86,7 +86,7 @@ async def send_message(text, img_url=None):
 
 # === בדיקת RSS ===
 async def check_rss(name, url):
-    print(f"🔍 Checking RSS from {name}")
+    print(f"🔍 נכנס ל־check_rss עבור {name}")
     feed = feedparser.parse(url)
     print(f"[{name}] נמצאו {len(feed.entries)} פריטים בפיד")
     for e in feed.entries:
@@ -101,7 +101,7 @@ async def check_rss(name, url):
 
 # === ספורט5 — גירוד עמוד במקום RSS ===
 async def check_sport5():
-    print("🔍 Checking Sport5")
+    print("🔍 נכנס ל־check_sport5")
     try:
         url = "https://www.sport5.co.il/liga.aspx?FolderID=44/"
         res = requests.get(url, timeout=10)
@@ -124,7 +124,7 @@ async def check_sport5():
 
 # === ספורט1 — גירוד עמוד במקום RSS ===
 async def check_sport1():
-    print("🔍 Checking Sport1")
+    print("🔍 נכנס ל־check_sport1")
     try:
         url = "https://sport1.maariv.co.il/israeli-soccer/"
         res = requests.get(url, timeout=10)
@@ -160,7 +160,6 @@ async def check_twitter():
     user_id = TWITTER_USERS[username]
     now = datetime.now(timezone.utc)
 
-    # הגבלת זמן – פעם ב־15 דקות בלבד
     if now - last_checked[username] < timedelta(minutes=15):
         print(f"⏳ מדלג על @{username}, נבדק לאחרונה לפני פחות מ־15 דקות")
         twitter_index = (twitter_index + 1) % len(twitter_user_keys)
@@ -171,7 +170,7 @@ async def check_twitter():
     twitter_index = (twitter_index + 1) % len(twitter_user_keys)
     update_sent_file()
 
-    print(f"🐦 Checking Twitter user @{username}")
+    print(f"🐦 נכנס ל־check_twitter עבור @{username}")
 
     try:
         response = twitter.get_users_tweets(
@@ -215,16 +214,17 @@ async def check_twitter():
 
 # === לולאת הריצה ===
 async def main_loop():
-    print("🏁 Beitar Bot Started Main Loop")
+    print("🏁 Beitar Bot Started Main Loop ✅")
     while True:
         try:
+            print("🔄 Beginning new loop iteration")
             await check_rss("ONE", "https://www.one.co.il/cat/coop/xml/rss/newsfeed.aspx?t=1")
             await check_sport5()
             await check_sport1()
             await check_rss("וואלה ספורט", "https://rss.walla.co.il/feed/156")
             await check_twitter()
         except Exception as e:
-            print("Main loop error:", e)
+            print("❌ Main loop error:", e)
         await asyncio.sleep(60)
 
 async def main():
