@@ -109,7 +109,7 @@ async def check_sport5():
         url = "https://www.sport5.co.il/liga.aspx?FolderID=44"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select(".articleShort a")
+        items = soup.select(".articleShort a, .section")
         print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
         for a in items:
             title = a.get_text(strip=True)
@@ -135,7 +135,7 @@ async def check_sport1():
         url = "https://sport1.maariv.co.il/israeli-soccer/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select("a.title, a.card-title")
+        items = soup.select("a.title, a.card-title, a.cta-post")
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
         for a in items:
             title = a.get_text(strip=True)
