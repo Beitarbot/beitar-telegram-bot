@@ -3,6 +3,7 @@ import json
 import os
 import re
 import feedparser
+import aiohttp
 from telegram import Bot
 from deep_translator import GoogleTranslator
 from tweepy import Client
@@ -229,7 +230,10 @@ async def check_twitter():
 
 # === פינג עצמי לשמירה על פעילות ===
 async def ping_self():
-    url = "https://beitar-telegram-bot.onrender.com"
+    url = os.getenv("SELF_URL")
+    if not url:
+        print("⚠️ SELF_URL not set. Skipping ping.", flush=True)
+        return
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
