@@ -105,19 +105,25 @@ async def check_rss(name, url):
 
 # === ספורט5 ===
 async def check_sport5():
-    print("\U0001F50D נכנס ל־check_sport5", flush=True)
+    print("🔍 נכנס ל־check_sport5", flush=True)
     try:
         url = "https://www.sport5.co.il/liga.aspx?FolderID=44"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select(".article-list h2 a, .mainarticle-league h2 a")
+
+        # סלקטור חדש
+        items = soup.select("a.news-item-title, .article-title a, h2 a")
         print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
+
         for a in items:
             title = a.get_text(strip=True)
             link = a.get("href")
+            print("—", title, "=>", link, flush=True)
+
             if not link or not link.startswith("/"):
                 continue
             link = "https://www.sport5.co.il" + link
+
             if link in sent:
                 continue
             if any(k in title for k in KEYWORDS):
@@ -125,26 +131,33 @@ async def check_sport5():
                 print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
                 mark_sent(link)
             else:
-                print(f"[Sport5] \U0001F50D נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
+                print(f"[Sport5] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
     except Exception as e:
         print("Sport5 error:", e, flush=True)
 
+
 # === ספורט1 ===
 async def check_sport1():
-    print("\U0001F50D נכנס ל־check_sport1", flush=True)
+    print("🔍 נכנס ל־check_sport1", flush=True)
     try:
         url = "https://sport1.maariv.co.il/israeli-soccer/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select("a.title, .info-post .title-post h3")
+
+        # סלקטורים מעודכנים:
+        items = soup.select("a.entry-title, h3.entry-title a, .info-post .title-post h3 a")
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
+
         for a in items:
             title = a.get_text(strip=True)
             link = a.get("href")
+            print("—", title, "=>", link, flush=True)
+
             if not link:
                 continue
             if not link.startswith("http"):
                 link = "https://sport1.maariv.co.il" + link
+
             if link in sent:
                 continue
             if any(k in title for k in KEYWORDS):
@@ -152,9 +165,10 @@ async def check_sport1():
                 print(f"📤 Sport1 — נשלחת כותרת: {title}", flush=True)
                 mark_sent(link)
             else:
-                print(f"[Sport1] \U0001F50D נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
+                print(f"[Sport1] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
     except Exception as e:
         print("Sport1 error:", e, flush=True)
+
 
 # === טוויטר ===
 TWITTER_USERS = {
