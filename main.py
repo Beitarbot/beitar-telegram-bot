@@ -106,68 +106,82 @@ async def check_rss(name, url):
 # === ספורט5 ===
 async def check_sport5():
     print("🔍 נכנס ל־check_sport5", flush=True)
+    url = "https://www.sport5.co.il/"
     try:
-        url = "https://www.sport5.co.il/liga.aspx?FolderID=44"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-
-        # סלקטור חדש
-        items = soup.select("a.news-item-title, .article-title a, h2 a")
+        items = soup.select(".article-list h2 a, .mainarticle-league h2 a")
         print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
-
-        for a in items:
-            title = a.get_text(strip=True)
-            link = a.get("href")
-            print("—", title, "=>", link, flush=True)
-
-            if not link or not link.startswith("/"):
-                continue
-            link = "https://www.sport5.co.il" + link
-
-            if link in sent:
-                continue
-            if any(k in title for k in KEYWORDS):
-                await send_message(f"Sport5 📄\n{title}\n{link}")
-                print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
-                mark_sent(link)
-            else:
-                print(f"[Sport5] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
     except Exception as e:
-        print("Sport5 error:", e, flush=True)
+        print(f"[Sport5] שגיאה בהורדת עמוד הבית: {e}", flush=True)
+        return
+
+    for a in items:
+        title = a.get_text(strip=True)
+        link = a.get("href")
+        if not link or not link.startswith("/"):
+            continue
+        link = "https://www.sport5.co.il" + link
+        if link in sent:
+            continue
+
+        try:
+            article_res = requests.get(link, timeout=10)
+            article_soup = BeautifulSoup(article_res.text, "html.parser")
+            paragraphs = article_soup.select("div.articleText p")
+            body = " ".join(p.get_text(strip=True) for p in paragraphs)
+        except Exception as e:
+            print(f"[Sport5] שגיאה בשליפת תוכן מ־{link}: {e}", flush=True)
+            body = ""
+
+        full_text = title + " " + body
+        if any(k in full_text for k in KEYWORDS):
+            await send_message(f"Sport5 📄\n{title}\n{link}")
+            print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
+            mark_sent(link)
+        else:
+            print(f"[Sport5] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
+
 
 
 # === ספורט1 ===
 async def check_sport1():
     print("🔍 נכנס ל־check_sport1", flush=True)
+    url = "https://www.sport1.co.il/"
     try:
-        url = "https://sport1.maariv.co.il/israeli-soccer/"
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-
-        # סלקטורים מעודכנים:
-        items = soup.select("a.entry-title, h3.entry-title a, .info-post .title-post h3 a")
+        items = soup.select(".main-article a, .teaser a")
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
-
-        for a in items:
-            title = a.get_text(strip=True)
-            link = a.get("href")
-            print("—", title, "=>", link, flush=True)
-
-            if not link:
-                continue
-            if not link.startswith("http"):
-                link = "https://sport1.maariv.co.il" + link
-
-            if link in sent:
-                continue
-            if any(k in title for k in KEYWORDS):
-                await send_message(f"Sport1 📄\n{title}\n{link}")
-                print(f"📤 Sport1 — נשלחת כותרת: {title}", flush=True)
-                mark_sent(link)
-            else:
-                print(f"[Sport1] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
     except Exception as e:
-        print("Sport1 error:", e, flush=True)
+        print(f"[Sport1] שגיאה בהורדת עמוד הבית: {e}", flush=True)
+        return
+
+    for a in items:
+        title = a.get_text(strip=True)
+        link = a.get("href")
+        if not link or not link.startswith("http"):
+            continue
+        if link in sent:
+            continue
+
+        try:
+            article_res = requests.get(link, timeout=10)
+            article_soup = BeautifulSoup(article_res.text, "html.parser")
+            paragraphs = article_soup.select("div.textSection p")
+            body = " ".join(p.get_text(strip=True) for p in paragraphs)
+        except Exception as e:
+            print(f"[Sport1] שגיאה בשליפת תוכן מ־{link}: {e}", flush=True)
+            body = ""
+
+        full_text = title + " " + body
+        if any(k in full_text for k in KEYWORDS):
+            await send_message(f"Sport1 📄\n{title}\n{link}")
+            print(f"📤 Sport1 — נשלחת כותרת: {title}", flush=True)
+            mark_sent(link)
+        else:
+            print(f"[Sport1] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
+
 
 
 # === טוויטר ===
