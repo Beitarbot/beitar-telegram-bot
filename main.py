@@ -147,11 +147,11 @@ async def check_sport5():
 # === ספורט1 ===
 async def check_sport1():
     print("🔍 נכנס ל־check_sport1", flush=True)
-    url = "https://www.sport1.co.il/"
+    url = "https://m.sport1.maariv.co.il/"
     try:
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select(".main-article a, .teaser a")
+        items = soup.select("a.title")  # או "article a"
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
     except Exception as e:
         print(f"[Sport1] שגיאה בהורדת עמוד הבית: {e}", flush=True)
