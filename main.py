@@ -120,7 +120,7 @@ async def check_sport5():
         if not link:
             continue
         if link.startswith("/"):
-            link = "https://www.sport5.co.il" + link
+            link = "https://www.sport5.co.il/articles.aspx?FolderID=64" + link
 
         print(f"[Sport5 DEBUG] title: {title}, link: {link}", flush=True)
 
