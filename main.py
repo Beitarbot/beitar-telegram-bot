@@ -135,6 +135,7 @@ async def check_sport5():
             body = ""
 
         full_text = title + " " + body
+        print(f"[Sport5] 🔍 נבדקת כותרת: \"{title}\"", flush=True)
         if any(k in full_text for k in KEYWORDS):
             await send_message(f"Sport5 📄\n{title}\n{link}")
             print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
@@ -147,11 +148,11 @@ async def check_sport5():
 # === ספורט1 ===
 async def check_sport1():
     print("🔍 נכנס ל־check_sport1", flush=True)
-    url = "https://m.sport1.maariv.co.il/"
+    url = "https://www.sport1.co.il/"
     try:
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select("a.title")  # או "article a"
+        items = soup.select("article a")  # עדיף מכל סוג כדי לוודא שנכנסים לכתבות
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
     except Exception as e:
         print(f"[Sport1] שגיאה בהורדת עמוד הבית: {e}", flush=True)
