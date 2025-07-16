@@ -37,7 +37,7 @@ twitter = Client(bearer_token=TW_BEARER)
 # === מילות מפתח לסינון ===
 KEYWORDS = ["בית\"ר", "ביתר", "אברמוב", "יצחקי", "מביתר", "מבית\"ר", "בביתר", "בבית\"ר",
             "גיל כהן", "מיגל סילבה", "ירדן שועה", "עומר אצילי", "סילבה קאני", "טימוטי מוזי", "מוזי",
-            "קאני", "שועה", "אצילי", "קאלו", "אילסון", "איילסון", "טבארש", "קראבאלי", "אריאל מנדי"]
+            "קאני", "שועה", "אצילי", "קאלו", "אילסון", "איילסון", "זסנו", "קראבאלי", "אריאל מנדי"]
 
 # === טעינת מזהים שנשלחו בעבר ===
 SENT_FILE = "sent.json"
@@ -58,7 +58,6 @@ else:
     sent = set()
     twitter_index = 0
 
-# === עדכון קובץ מזהים ===
 def update_sent_file():
     sent_data = {"sent_ids": list(sent), "twitter_index": twitter_index}
     with open(SENT_FILE, "w", encoding="utf-8") as f:
@@ -68,14 +67,12 @@ def mark_sent(id_):
     sent.add(id_)
     update_sent_file()
 
-# === תרגום ===
 def translate(text):
     try:
         return GoogleTranslator(source='auto', target='he').translate(text)
     except:
         return text
 
-# === שליחת הודעה לטלגרם ===
 async def send_message(text, img_url=None):
     try:
         if img_url:
@@ -101,7 +98,7 @@ async def check_rss(name, url):
             print(f"📤 {name} — נשלחת כותרת: {title}", flush=True)
             mark_sent(id_)
         else:
-            print(f"[{name}] \U0001F50D נבדקת כותרת: \"{e.title}\" ❌ אין מילות מפתח", flush=True)
+            print(f"[{name}] ❌ אין מילות מפתח בכותרת: \"{e.title}\"", flush=True)
 
 # === ספורט5 ===
 async def check_sport5():
@@ -141,18 +138,16 @@ async def check_sport5():
             print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
             mark_sent(link)
         else:
-            print(f"[Sport5] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
-
-
+            print(f"[Sport5] ❌ אין מילות מפתח בכותרת: \"{title}\"", flush=True)
 
 # === ספורט1 ===
 async def check_sport1():
     print("🔍 נכנס ל־check_sport1", flush=True)
-    url = "https://www.sport1.co.il/"
+    url = "https://sport1.maariv.co.il/israeli-soccer/"
     try:
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select("article a")  # עדיף מכל סוג כדי לוודא שנכנסים לכתבות
+        items = soup.select("article a")
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
     except Exception as e:
         print(f"[Sport1] שגיאה בהורדת עמוד הבית: {e}", flush=True)
@@ -181,9 +176,7 @@ async def check_sport1():
             print(f"📤 Sport1 — נשלחת כותרת: {title}", flush=True)
             mark_sent(link)
         else:
-            print(f"[Sport1] 🔍 נבדקת כותרת: \"{title}\" ❌ אין מילות מפתח", flush=True)
-
-
+            print(f"[Sport1] ❌ אין מילות מפתח בכותרת: \"{title}\"", flush=True)
 
 # === טוויטר ===
 TWITTER_USERS = {
@@ -251,13 +244,12 @@ async def check_twitter():
                 print(f"✅ נשלח ציוץ: {text[:40]}...", flush=True)
                 mark_sent(id_)
             else:
-                print(f"[Twitter @{username}] \U0001F50D נבדק ציוץ: \"{text[:40]}...\" ❌ אין מילות מפתח", flush=True)
+                print(f"[Twitter @{username}] ❌ אין מילות מפתח בציוץ: \"{text[:40]}...\"", flush=True)
 
     except Exception as e:
         print(f"Twitter error ({username}):", e, flush=True)
 
-
-# === פינג עצמי לשמירה על פעילות ===
+# === פינג עצמי לשמירה על פעילות ב־Render ===
 async def ping_self():
     url = os.getenv("SELF_URL")
     if not url:
@@ -275,7 +267,7 @@ async def keep_alive_loop():
         await ping_self()
         await asyncio.sleep(840)  # כל 14 דקות
 
-# === לולאת הריצה ===
+# === לולאת הריצה הראשית ===
 async def main_loop():
     print("🏁 Beitar Bot Started Main Loop ✅", flush=True)
     while True:
@@ -290,7 +282,6 @@ async def main_loop():
             print("❌ Main loop error:", e, flush=True)
         await asyncio.sleep(60)
 
-
 # === הפעלת שתי הלולאות בו־זמנית ===
 async def main():
     await asyncio.gather(
@@ -298,4 +289,6 @@ async def main():
         keep_alive_loop()
     )
 
+# === הפעלה ===
 asyncio.run(main())
+
