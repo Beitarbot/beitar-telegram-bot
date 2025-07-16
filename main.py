@@ -107,7 +107,7 @@ async def check_sport5():
     try:
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select("div.textDiv a"")
+        items = soup.select(".mainArticle a, .article-list a")  # כולל כתבות ראשיות ורשימה
         print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
     except Exception as e:
         print(f"[Sport5] שגיאה בהורדת עמוד הבית: {e}", flush=True)
@@ -117,9 +117,11 @@ async def check_sport5():
         title = a.get_text(strip=True)
         link = a.get("href")
         print(f"[Sport5 DEBUG] title: {title}, link: {link}", flush=True)
-        if not link or not link.startswith("/"):
+
+        if not link or not link.startswith("/articles.aspx"):
             print(f"[Sport5 DEBUG] מדלג — לינק לא תקני: {link}", flush=True)
             continue
+
         link = "https://www.sport5.co.il" + link
         if link in sent:
             continue
@@ -134,7 +136,6 @@ async def check_sport5():
             body = ""
 
         full_text = title + " " + body
-        print(f"[Sport5] 🔍 נבדקת כותרת: \"{title}\"", flush=True)
         if any(k in full_text for k in KEYWORDS):
             await send_message(f"Sport5 📄\n{title}\n{link}")
             print(f"📤 Sport5 — נשלחת כותרת: {title}", flush=True)
