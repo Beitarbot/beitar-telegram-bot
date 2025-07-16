@@ -147,7 +147,7 @@ async def check_sport1():
     try:
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select("article a")
+        items = soup.select(".excerpt-post p, .title-post h3")
         print(f"[Sport1] נמצאו {len(items)} פריטים", flush=True)
     except Exception as e:
         print(f"[Sport1] שגיאה בהורדת עמוד הבית: {e}", flush=True)
