@@ -107,7 +107,7 @@ async def check_sport5():
     try:
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select("a")  # בודקים את כל הלינקים בדף
+        items = soup.select(".article-list a")  # בודקים את כל הלינקים בדף
         print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
     except Exception as e:
         print(f"[Sport5] שגיאה בהורדת הדף: {e}", flush=True)
@@ -120,7 +120,7 @@ async def check_sport5():
         if not link:
             continue
         if link.startswith("/"):
-            link = "https://www.sport5.co.il/articles.aspx?FolderID=64" + link
+            link = "https://www.sport5.co.il" + link
 
         print(f"[Sport5 DEBUG] title: {title}, link: {link}", flush=True)
 
