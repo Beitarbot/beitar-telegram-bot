@@ -107,22 +107,23 @@ async def check_sport5():
     try:
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.select(".mainArticle a, .article-list a")  # כולל כתבות ראשיות ורשימה
+        items = soup.select("a")  # בודקים את כל הלינקים בדף
         print(f"[Sport5] נמצאו {len(items)} פריטים", flush=True)
     except Exception as e:
-        print(f"[Sport5] שגיאה בהורדת עמוד הבית: {e}", flush=True)
+        print(f"[Sport5] שגיאה בהורדת הדף: {e}", flush=True)
         return
 
     for a in items:
         title = a.get_text(strip=True)
         link = a.get("href")
+
+        if not link:
+            continue
+        if link.startswith("/"):
+            link = "https://www.sport5.co.il" + link
+
         print(f"[Sport5 DEBUG] title: {title}, link: {link}", flush=True)
 
-        if not link or not link.startswith("/articles.aspx"):
-            print(f"[Sport5 DEBUG] מדלג — לינק לא תקני: {link}", flush=True)
-            continue
-
-        link = "https://www.sport5.co.il" + link
         if link in sent:
             continue
 
@@ -142,6 +143,7 @@ async def check_sport5():
             mark_sent(link)
         else:
             print(f"[Sport5] ❌ אין מילות מפתח בכותרת: \"{title}\"", flush=True)
+
 
 # === ספורט1 ===
 async def check_sport1():
