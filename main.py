@@ -116,7 +116,9 @@ async def check_sport5():
     for a in items:
         title = a.get_text(strip=True)
         link = a.get("href")
+        print(f"[Sport5 DEBUG] title: {title}, link: {link}", flush=True)
         if not link or not link.startswith("/"):
+            print(f"[Sport5 DEBUG] מדלג — לינק לא תקני: {link}", flush=True)
             continue
         link = "https://www.sport5.co.il" + link
         if link in sent:
@@ -156,7 +158,9 @@ async def check_sport1():
     for a in items:
         title = a.get_text(strip=True)
         link = a.get("href")
+        print(f"[Sport1 DEBUG] title: {title}, link: {link}", flush=True) 
         if not link or not link.startswith("http"):
+            print(f"[Sport1 DEBUG] מדלג — לינק לא תקני: {link}", flush=True)
             continue
         if link in sent:
             continue
